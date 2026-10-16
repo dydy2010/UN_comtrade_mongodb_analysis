@@ -80,9 +80,9 @@ These tests use synthetic records and do not read `.env`, make API requests, or 
 
 ## Optional India exploration
 
-The last notebook cell is separate from the Swiss project. Set `RUN_INDIA_EXPLORATION = True` to retrieve India's calendar-year 2025 imports of HS 2710 from all available partners through the no-key public API. It exports an Excel workbook and a top-15 value-ranking chart to `data/india_exploration/`. HS 2710 excludes crude oil; partner values are not physical quantities.
+This side project is kept in the standalone `India_HS2710_exploration.ipynb` notebook and is separate from the Swiss analysis. Run its exploration cell to retrieve India's calendar-year 2025 imports of HS 2710 from all available partners through the no-key public API. It exports an Excel workbook and a top-15 value-ranking chart to `data/india_exploration/`. HS 2710 excludes crude oil; partner values are not physical quantities.
 
-The workbook has readable supplier rankings, a separate World total, all raw fields, reconciliation checks, query details, and an embedded chart. Partner countries/areas may include unspecified categories. Set the switch back to `False` when returning to normal Swiss runs. The optional cell is excluded from Quarto output and does not change the Swiss data or settings.
+The workbook has readable supplier rankings, a separate World total, all raw fields, reconciliation checks, query details, and an embedded chart. Partner countries/areas may include unspecified categories. This notebook does not change the Swiss data or settings.
 
 ## Render the PDF
 
