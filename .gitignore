@@ -7,4 +7,6 @@ venv/
 __pycache__/
 .ipynb_checkpoints/
 .DS_Store
-data/
+data/*
+!data/v2_hs4_snapshot_20261017T094752738553Z.json
+!data/v2_partner_totals_20261016T143600945247Z.json

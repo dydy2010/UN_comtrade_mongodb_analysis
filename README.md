@@ -1,8 +1,20 @@
 # UN Comtrade MongoDB Analysis
 
-This NoSQL project studies **Switzerland's export structure from 2022 to 2025**. Extraction, validation, and snapshot saving are implemented; MongoDB loading, document modeling, and aggregation analysis are the next stages.
+This NoSQL project studies **Switzerland's exports using UN Comtrade**.
+`UN_commodity.ipynb` keeps the validated World-by-chapter baseline for 2022-2025.
+The working notebook, `UN_Comtrade_V2.ipynb`, studies 30 selected partner areas during 2023-2025.
+Saved outputs confirm discovery, 90 HS4 batches, and 72,459 verified raw documents.
+They also confirm 72,369 verified standard observations in `swiss_trade_v2.trade_clean`.
 
-## Research scope
+The current [project plan](PROJECT_PLAN.md) retains completed phases and sets the remaining submission checks.
+V2 contains three executed analyses: destination shares, 2025 top-ten HS4 headings, and top-five destination HS2 composition.
+The notebook now includes conclusions, learnings, sources, and the implemented model's UML image.
+Final PDF review, controlled reproducibility checks, and packaging remain open.
+The 4,235-observation top-50 subset remains an optional drill-down, not the source for complete chapter sums.
+
+The remaining work uses only existing HS4 observations and their saved reference metadata. `partner_totals_raw` contains all-commodity totals, not HS2 records, and remains historical discovery evidence. Derive HS2 summaries from HS4 parent codes. No partner-total clean collection or new extraction is planned. Future market shares refer to the selected standard-HS4 dataset, not all Swiss exports.
+
+## V1 baseline scope
 
 - Reporter: Switzerland, Comtrade code **757** (not ISO numeric code 756).
 - Flow: exports of goods; frequency: annual; partner: World.
@@ -14,6 +26,12 @@ This NoSQL project studies **Switzerland's export structure from 2022 to 2025**.
 The analysis will identify leading chapters, changes in chapter shares and export values, and top-five concentration. Shares refer to the sum of included chapters unless separately reconciled with an official total. We do not infer inflation-adjusted growth, company profits, or physical-volume changes from dollar values alone.
 
 All analysis will use MongoDB pipelines after loading. The intended clean model embeds related reporter, partner, commodity, measure, and quality fields within each year/chapter observation; a separate category tree is not needed for this scope.
+
+## V2 partner discovery (completed)
+
+V2 requests annual Swiss export totals using `partnerCode=None` and `cmdCode="TOTAL"`. Python omits the partner filter, so the response includes reported partners and World. The notebook ranks the top 30 non-World partner areas by cumulative 2023–2025 value. Code `490`, `Other Asia, nes`, remains eligible under the partner-area scope. HS4 extraction then retrieves headings for those partners, and MongoDB ranks 50 headings across the selected partners and years. V1 remains unchanged.
+
+V2 uses the same API-key setup and Python environment described below. Its discovery snapshot and CSV use V2-specific filenames so they are not confused with V1 data. Do not reuse the V1 snapshot for V2.
 
 ## Run the notebook
 
@@ -27,6 +45,8 @@ python -m notebook
 ```
 
 Alternatively, select an existing Python environment with these dependencies in your editor. Open `UN_commodity.ipynb` and use that environment as its kernel. The kernel's working directory should be this repository folder.
+
+`UN_Comtrade_V2.ipynb` uses the same environment and `.env` API key. Discovery and HS4 extraction have separate source settings and snapshots. Review the notebook's connection and write cells before running everything; the user may have enabled earlier Atlas operations.
 
 ### Option A: fresh API extraction
 
@@ -73,10 +93,59 @@ If accepted, include the selected dated snapshot, `.env.example`, `requirements.
 ## Check validation without API access
 
 ```bash
-python -m unittest -v test_pilot_validation test_india_exploration
+python3 -m unittest -q test_pilot_validation test_india_exploration test_comtrade_v2 test_comtrade_hs4 test_comtrade_quality test_comtrade_transform test_comtrade_save test_comtrade_partners test_comtrade_products
 ```
 
 These tests use synthetic records and do not read `.env`, make API requests, or write to MongoDB.
+
+The current suite passes 146 offline tests.
+The tests use mocks; they do not replace the notebook's saved live MongoDB evidence.
+V2 contains completed quality checks, transformation previews, saved-collection verification, and analysis outputs.
+The current notebook enables connection, quality checking, verification, and the three analyses.
+It keeps `HS4_DATA_SOURCE = "off"` and `SAVE_TRADE_CLEAN = False`.
+Review all earlier extraction and write flags before executing cells.
+Do not run the notebook automatically to refresh documentation or export a PDF.
+
+## Check the Atlas connection
+
+1. Install the updated project requirements in the notebook's Python environment.
+2. Add `MONGODB_URI` to your local `.env`, preserving the Comtrade key.
+3. Run the V2 imports cell, then find **Database setup: connect to Atlas** after the extraction log.
+4. Set `CONNECT_TO_MONGODB = True` and run the settings and connection cells.
+
+The code follows the course's `pymongo.MongoClient(CNX_STR)` pattern and verifies connectivity with `client.admin.command("ping")`. The connection cell does not write data. You do not need to rerun the API extraction. Set the connection flag to `False` to skip configuration loading and Atlas access. Existing environment values take precedence over `.env`.
+
+Never print the URI or include `.env` in a commit or submission.
+
+## Historical HS4 extraction procedure
+
+The current project already has the required HS4 observations and frozen reference.
+The steps below document the earlier extraction; they do not describe the remaining work.
+Do not request new data for the final report.
+
+The partner totals must already exist, and the partner-ranking and selection cells must have produced 30 codes.
+
+1. Rerun the updated download-function cell. This defines the shared request helper without downloading data.
+2. In **Extract HS4 detail for the selected partners**, set `HS4_DATA_SOURCE = "api"`.
+3. Keep `LOAD_HS4_TO_MONGODB` and `RANK_HS4_IN_MONGODB` set to `False`.
+4. Run the HS4 settings, validation-functions, reference-and-coverage-functions, and extraction cells in order.
+5. Save the snapshot, then inspect the preview, batch counts, nonstandard codes, and coverage audit.
+6. Copy the printed dated path into `HS4_SNAPSHOT_PATH` and switch to `HS4_DATA_SOURCE = "snapshot"` for later runs.
+7. Run the MongoDB helper cell, enable `LOAD_HS4_TO_MONGODB`, and run only the HS4 load cell.
+8. After verifying the load, enable `RANK_HS4_IN_MONGODB` and run the read-only ranking cell.
+
+The first download makes 90 data requests before retries, plus one public H6 reference download. It requests one partner per year, with at least five seconds between data batches. Check your remaining quota first. HS4 API mode loads its own key even when discovery uses snapshot mode. New HS4 settings default to `off` with both database flags disabled.
+
+HS4 snapshot schema version 2 preserves the selected partners, raw H6 reference, and all-commodity control totals alongside records and logs. Snapshot mode needs no reference download or Atlas access in the extraction cells. It rejects incompatible scope, classification, duplicate keys, invalid values, and inconsistent logs. Empty batches remain visible; missing observations do not become artificial zeroes.
+
+The coverage audit uses familiar Pandas grouping and joins to compare source-row sums and standard-heading sums with frozen partner totals. It reports differences without rescaling values. Missing rows and zero denominators retain undefined coverage. Investigate differences before interpreting rankings.
+
+The raw loader preserves source fields and stable IDs while using standard PyMongo `ReplaceOne` and `bulk_write()` batches of at most 1,000. This extends the course's replacement/upsert pattern to reduce Atlas round trips. It refuses stale in-scope observations before writing and never deletes them automatically. Ranking uses MongoDB to select 50 standard H6 headings overall; nonstandard rows remain raw but do not enter this ranking.
+
+The completed clean model retains all standard HS4 observations, not just the top 50.
+MongoDB derives `product.chapter.hsCode` from each heading prefix.
+The saved H6 reference supplies chapter labels.
+Keep the verified `trade_clean` destination and its completed checks unchanged.
 
 ## Optional India exploration
 
@@ -88,10 +157,10 @@ The workbook has readable supplier rankings, a separate World total, all raw fie
 
 Install Quarto and a working TeX distribution separately if not already available. Quarto's standard PDF workflow can use TinyTeX.
 
-After running and saving the notebook:
+After the selected project notebook has its final analysis, diagrams, and saved outputs:
 
 ```bash
 quarto render "UN_commodity.ipynb" --to pdf --no-execute
 ```
 
-Rendering uses saved outputs and does not execute the API cells. Regenerate the PDF after notebook changes; an existing PDF may be an older preview. Inspect the final tables, images, code layout, and page breaks before submission.
+For the V2 final report, replace the filename with `UN_Comtrade_V2.ipynb`. Rendering uses saved outputs and does not execute the API cells. Regenerate the PDF after notebook changes; an existing PDF may be an older preview. Inspect the final tables, images, code layout, and page breaks before submission.
