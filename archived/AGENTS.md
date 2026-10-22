@@ -1,0 +1,22 @@
+# Project guidance
+
+- Scope: Swiss annual merchandise exports to World, 2022–2025, HS two-digit chapters 01–97 excluding reserved 77. Comtrade reporter code is 757. Require returned edition H6; expect 96 chapters per year and 384 unique year/chapter records. Exclude partial-year 2026 data from annual comparisons.
+- V1 extraction, validation, and snapshot saving are implemented. `UN_Comtrade_V2.ipynb` is a separate 2023–2025 partner-summary discovery version; keep V1 unchanged.
+- The user has saved successful Atlas connection, partner loading, and top-30 ranking outputs. Preserve the user's connection settings and cells. Review earlier API and write cells before running the notebook.
+- Saved V2 outputs confirm 90 HS4 batches, 72,459 verified raw documents, top-50 ranking, and a 4,235-observation drill-down. The clean model remains unimplemented. Preserve user settings; review enabled API and database flags before executing anything.
+- Run offline tests with `python -m unittest -v test_pilot_validation test_india_exploration test_comtrade_v2 test_comtrade_hs4`. Tests use synthetic records and mocked services without reading credentials.
+- Install notebook dependencies using this folder's `requirements.txt`, not a parent workspace manifest.
+- Render saved notebook outputs with `quarto render "UN_commodity.ipynb" --to pdf --no-execute`. Quarto and TeX are separate system dependencies.
+- Do not read, print, commit, or package `.env` secrets. Do not execute authenticated API cells unless requested.
+- Discovery and HS4 extraction have separate source settings. Keep snapshot extraction credential-free and network-free. Earlier Atlas cells require separate review. Dated snapshots belong in Git-ignored `data/`; check redistribution terms before sharing.
+- Keep V1, V2 partner totals, and V2 HS4 snapshots separate. Discovery uses `partnerCode=None`, not literal `"ALL"`. Exclude World from ranking. Retain code `490`, `Other Asia, nes`, under the agreed partner-area scope.
+- HS4 extraction uses `AG4`, original H6, and one partner-year per batch: 90 calls before retries. Preserve the selected partners and ranking in its snapshot. Keep absent combinations absent.
+- HS4 API mode also downloads the public H6 reference once. Snapshot schema version 2 freezes this reference and partner-year control totals. Use the coverage audit before interpreting product results; do not rescale differences or fill missing observations with zero.
+- Preserve and flag nonstandard source codes in raw data. Restrict standard-heading ranking to the saved H6 reference, excluding nonstandard international chapters. Reference downloads remain disabled in snapshot mode.
+- HS4 writes use stable IDs and standard PyMongo `ReplaceOne`/`bulk_write()` batches of at most 1,000 in `hs4_raw`. Reject stale in-scope records rather than deleting them. The top-50 pipeline ranks standard headings across all selected partners and years.
+- Follow the updated HS4-only scope in `PROJECT_PLAN.md`. Use existing `hs4_raw` as the sole observation source for the remaining work. Create one `trade_clean` collection with all 72,369 standard HS4 observations for the selected 30 partners. The earlier `partner_totals_clean` proposal is superseded; do not implement it or request new data.
+- `partner_totals_raw` contains all-commodity `TOTAL` rows, not HS2 detail. Keep it as completed discovery evidence. Derive HS2 summaries from the existing HS4 observations through parent chapter codes. The top-50 selection is a drill-down, not the only basis for chapter totals.
+- Future partner rankings and shares describe standard-heading value within the selected 30 areas, not all Swiss exports. Do not introduce World denominators or national coverage claims from the HS4-only subset.
+- Use the course's embedded-observation model, named PyMongo stages, read-only previews, and guarded `$out` writes. Derive HS2 summaries from full standard detail. A final UML class diagram is required; ERD, nested sets, extra entity collections, and advanced joins are optional, not compulsory.
+- `India_HS2710_exploration.ipynb` is an unrelated side project for India 2025 HS 2710 imports. Its public-data query requires no key, exports Excel and a chart, and must not modify Swiss settings. Keep World totals separate from partner rows.
+- Course notes live at `txt course content/Copy_paste_course_content.md`; the plan now lives at `PROJECT_PLAN.md` in this repository. Do not recreate the deleted parent-workspace plan. Follow course patterns and explain extensions.
